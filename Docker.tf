@@ -1,6 +1,6 @@
 terraform {
    required_providers {
-   
+
    docker = {
      source = "kreuzwerker/docker"
      version = "2.9.0"
@@ -9,44 +9,49 @@ terraform {
 }
 
 provider "docker" {
- 
-}
 
-resource "docker_image" "nginx" {
-       name = "nginx:1.11-alpine"
 }
 
 resource "docker_container" "nginx-servers" {
    name = "nginx-server${format("%02d", count.index+1)}"
-   image = "${docker_image.nginx.latest}"
+   image = "nginx:1.11-alpine"
    count = 2
-   ports {
-   internal = 80
-    }
    volumes {
-     container_path = "/home/terraform/Desktop/Terraform/nginx-container/html"
-     host_path = "/home/terraform/Desktop/Terraform/nginx-servers"
+     container_path = "/usr/share/nginx/html/index.html"
+     host_path = abspath("index${count.index}.html")
      read_only = true
   }
 }
 
 
-resource "docker_image" "redis" {
-	name = "redis:latest"
+data "template_file" "haproxy_config" { # prepare a template for the config file
+  template = "${file("${path.module}/haproxy.config")}"
+  vars = {
+    server0 = docker_container.nginx-servers[0].ip_address
+    server1 = docker_container.nginx-servers[1].ip_address
+  }
 }
 
-
-
+resource "local_file" "haproxy_config" { # Write the config file with IP addresses to haproxy.config.rendered
+    content     = data.template_file.haproxy_config.rendered
+    filename = "${path.module}/haproxy.config.rendered"
+}
 resource "docker_container" "haproxy"{
 
 	image = "haproxy:1.5.18"
 	name = "haproxy"
 	restart = "always"
+  ports {
+    internal = 80
+    external = 8080
+  }
 	volumes {
-		container_path  = "/home/terraform/Desktop/Terraform/haproxy-container"
-		host_path = "/home/terraform/Desktop/Terraform/haproxy"
+		container_path  = "/usr/local/etc/haproxy/haproxy.cfg"
+		host_path = abspath("haproxy.config.rendered")
 		read_only = false
 	}
-}
 
-         
+  depends_on = [
+    local_file.haproxy_config # Wait until the config file is created
+  ]
+}
