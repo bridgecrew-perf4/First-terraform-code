@@ -55,3 +55,41 @@ resource "docker_container" "haproxy"{
     local_file.haproxy_config # Wait until the config file is created
   ]
 }
+resource "docker_image" "mysql" {
+  name = "mysql:latest"
+}
+
+
+
+resource "docker_container" "database"{
+
+
+       name  = "database-server"
+       image = "mysql:5.7"
+  ports {
+    internal = 90
+    external = 9093
+  }
+  
+       volumes {
+               container_path   = "/var/lib/mysql/"
+               host_path = abspath("mysql_database")
+               read_only = false
+               
+       }
+       
+}
+
+
+
+resource "docker_volume"  "database_volume"{
+       
+       name = "database_volume"
+  
+  
+}
+ 
+ 
+resource "docker_volume" "Database_data" {
+  name = "Database_data"
+}
