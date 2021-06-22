@@ -61,15 +61,16 @@ resource "docker_image" "mysql" {
 
 
 
+
+
 resource "docker_container" "database"{
 
 
        name  = "database-server"
        image = "mysql:5.7"
-  ports {
-    internal = 90
-    external = 9093
-  }
+       env = ["MYSQL_ROOT_PASSWORD=ahmad@haidara"]
+       
+
   
        volumes {
                container_path   = "/var/lib/mysql/"
