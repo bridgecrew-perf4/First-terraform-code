@@ -69,28 +69,23 @@ resource "docker_container" "database"{
        name  = "database-server"
        image = "mysql:5.7"
        env = ["MYSQL_ROOT_PASSWORD=ahmad@haidara"]
-       
 
-  
+
+
        volumes {
                container_path   = "/var/lib/mysql/"
-               host_path = abspath("mysql_database")
+               volume_name = "database_volume"
                read_only = false
-               
+
        }
-       
+
 }
 
 
 
 resource "docker_volume"  "database_volume"{
-       
+
        name = "database_volume"
-  
-  
-}
- 
- 
-resource "docker_volume" "Database_data" {
-  name = "Database_data"
+
+
 }
