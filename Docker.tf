@@ -12,14 +12,14 @@ resource "docker_container" "nginx-servers" {
    name = "nginx-server${format("%02d", count.index+1)}"
    image = "nginx:1.11-alpine"
    count = 2
-   env = ["DATABASE_IP = docker_container.database-server.ip_address, DATABASE_DATA = docker_volume.database_data,DATA_BASE_USERNAME = user, DATABASE_PASS = ahmad@haidara "]
+   env = ["DATABASE_IP = ${docker_container.database.ip_address}", "DATA_BASE_USERNAME = root", "DATABASE_PASS = ahmad@haidara" ]
    volumes {
      container_path = "/usr/share/nginx/html/index.html"
      host_path = abspath("index${count.index}.html")
      read_only = true
-     
+
   }
-  
+
 }
 data "template_file" "haproxy_config" { # prepare a template for the config file
   template = "${file("${path.module}/haproxy.config")}"
@@ -66,10 +66,10 @@ resource "docker_container" "database"{
                host_path = abspath("mysql_database")
                volume_name = "database_data"
                read_only = false
-               
+
 
        }
-       
+
 
 }
 
